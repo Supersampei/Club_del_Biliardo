@@ -3,136 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biliardando's Club - Partite</title>
+  <title>Partite - Club del Biliardo</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Gestione Partite</h1>
+    <h1>Club del Biliardo</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="giocatori.html">Giocatori</a>
       <a href="luoghi.html">Luoghi</a>
-      <a href="partite.html" aria-current="true">Partite</a>
+      <a href="partite.html" aria-current="page">Partite</a>
       <a href="statistiche.html">Statistiche</a>
     </nav>
   </header>
 
   <main>
-    <section>
-      <h2>Nuova Partita</h2>
+    <h2>Gestione Partite</h2>
+
+    <form id="formPartita">
       <label>Tipo di gioco:</label>
-      <select id="tipoGioco">
+      <select id="tipoGioco" required>
         <option value="8-15">8-15</option>
         <option value="a-punti">A punti</option>
       </select>
 
       <label>Modalità:</label>
-      <select id="modalitaGioco">
+      <select id="modalitaGioco" required>
         <option value="singolo">Singolo</option>
         <option value="coppia">Coppia</option>
       </select>
 
       <label>Luogo:</label>
-      <select id="luogoPartita"></select>
+      <select id="luogoPartita" required></select>
 
       <label>Data:</label>
-      <input type="date" id="dataPartita">
+      <input type="date" id="dataPartita" required>
 
-      <div id="selezioneGiocatori"></div>
+      <div id="giocatoriContainer"></div>
 
-      <h3>Risultati Round</h3>
-      <div id="partitaLog"></div>
-      <button onclick="aggiungiRisultato()">Aggiungi Risultato (V/P)</button>
-      <button onclick="registraRisultato()">Registra Risultato</button>
-      <button onclick="terminaMatch()">Termina Match</button>
-    </section>
+      <h3>Mini-partite (V/P)</h3>
+      <div id="miniPartite"></div>
+      <button type="button" onclick="aggiungiMiniPartita()">➕ Aggiungi mini-partita</button>
 
-    <section>
-      <h2>Partite Registrate</h2>
-      <div id="listaPartite"></div>
-    </section>
+      <button type="submit" style="margin-top:1rem;">Salva Partita</button>
+    </form>
+
+    <h3>Partite Registrate</h3>
+    <div id="listaPartite"></div>
   </main>
 
+  <script src="js/main.js"></script>
   <script>
-    let giocatori = JSON.parse(localStorage.getItem("giocatori") || "[]");
-    let partite = JSON.parse(localStorage.getItem("partite") || "[]");
-    let luoghi = JSON.parse(localStorage.getItem("luoghi") || "[]");
+    function aggiornaLuoghiDropdown() {
+      const select = document.getElementById("luogoPartita");
+      select.innerHTML = "<option value=''>-- seleziona --</option>";
+      luoghi.forEach(l => {
+        const opt = document.createElement("option");
+        opt.value = l.id;
+        opt.textContent = l.nome;
+        select.appendChild(opt);
+      });
+    }
 
-    // Aggiorna la lista delle partite in ordine inverso
+    function aggiornaGiocatoriDropdown() {
+      const container = document.getElementById("giocatoriContainer");
+      container.innerHTML = "";
+      const modalita = document.getElementById("modalitaGioco").value;
+
+      if (modalita === "singolo") {
+        container.innerHTML = `
+          <label>Giocatore 1:</label>
+          <select id="player1">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+          <label>Giocatore 2:</label>
+          <select id="player2">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+        `;
+      } else {
+        container.innerHTML = `
+          <h4>Squadra 1</h4>
+          <label>Giocatore 1:</label>
+          <select id="player1">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+          <label>Giocatore 2:</label>
+          <select id="player2">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+          <h4>Squadra 2</h4>
+          <label>Giocatore 3:</label>
+          <select id="player3">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+          <label>Giocatore 4:</label>
+          <select id="player4">${giocatori.map((g,i)=>`<option value="${i}">${g.nome}</option>`).join("")}</select>
+        `;
+      }
+    }
+
+    function aggiungiMiniPartita() {
+      const div = document.createElement("div");
+      div.className = "mini-partita";
+      div.innerHTML = `
+        <select>
+          <option value="V">V</option>
+          <option value="P">P</option>
+        </select>
+        <button type="button" onclick="this.parentElement.remove()">❌</button>
+      `;
+      document.getElementById("miniPartite").appendChild(div);
+    }
+
+    document.getElementById("formPartita").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const tipo = document.getElementById("tipoGioco").value;
+      const modalita = document.getElementById("modalitaGioco").value;
+      const luogo = document.getElementById("luogoPartita").value;
+      const data = document.getElementById("dataPartita").value;
+
+      let giocatoriSelezionati = [];
+      if (modalita === "singolo") {
+        giocatoriSelezionati = [
+          parseInt(document.getElementById("player1").value),
+          parseInt(document.getElementById("player2").value)
+        ];
+      } else {
+        giocatoriSelezionati = [
+          parseInt(document.getElementById("player1").value),
+          parseInt(document.getElementById("player2").value),
+          parseInt(document.getElementById("player3").value),
+          parseInt(document.getElementById("player4").value)
+        ];
+      }
+
+      const dettagli = Array.from(document.querySelectorAll("#miniPartite select")).map(s => s.value);
+      const vittorie = [
+        dettagli.filter(v => v === "V").length,
+        dettagli.filter(v => v === "P").length
+      ];
+
+      partite.push({ tipo, modalita, luogo, data, giocatori: giocatoriSelezionati, vittorie, dettagli });
+      salvaLocalStorage();
+      aggiornaListaPartite();
+      e.target.reset();
+      document.getElementById("miniPartite").innerHTML = "";
+    });
+
     function aggiornaListaPartite() {
       const div = document.getElementById("listaPartite");
+      div.innerHTML = "";
+
       if (partite.length === 0) {
         div.innerHTML = "<p>Nessuna partita registrata</p>";
         return;
       }
-      div.innerHTML = "";
 
-      // ciclo al contrario → ultime partite in alto
-      for (let i = partite.length - 1; i >= 0; i--) {
-        const p = partite[i];
-
-        const squadra1Giocatore1 = giocatori[p.giocatori[0]];
-        const squadra1Giocatore2 = p.modalita === "coppia" ? giocatori[p.giocatori[1]] : null;
-
-        const squadra2Giocatore1 = p.modalita === "singolo"
-          ? giocatori[p.giocatori[1]]
-          : giocatori[p.giocatori[2]];
-        const squadra2Giocatore2 = p.modalita === "coppia" ? giocatori[p.giocatori[3]] : null;
-
-        const vincitore1 = p.vittorie[0] > p.vittorie[1];
-        const vincitore2 = p.vittorie[1] > p.vittorie[0];
-
+      [...partite].reverse().forEach((p, i) => {
         const card = document.createElement("div");
-        card.className = "partita-card";
+        card.className = "card";
+
+        let giocatoriTxt = "";
+        if (p.modalita === "singolo") {
+          giocatoriTxt = `${giocatori[p.giocatori[0]]?.nome || "?"} vs ${giocatori[p.giocatori[1]]?.nome || "?"}`;
+        } else {
+          giocatoriTxt = `${giocatori[p.giocatori[0]]?.nome || "?"} & ${giocatori[p.giocatori[1]]?.nome || "?"} vs ${giocatori[p.giocatori[2]]?.nome || "?"} & ${giocatori[p.giocatori[3]]?.nome || "?"}`;
+        }
 
         card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <strong>${squadra1Giocatore1?.nome || "Giocatore 1"}</strong>
-              ${squadra1Giocatore2 ? " & " + squadra1Giocatore2.nome : ""}
-              ${vincitore1 ? '<span class="vincitore">Vincitore</span>' : ""}
-            </div>
-            <div>
-              <input type="number" value="${p.vittorie[0]}" id="score0_${i}" style="width:40px;text-align:center;"> :
-              <input type="number" value="${p.vittorie[1]}" id="score1_${i}" style="width:40px;text-align:center;">
-            </div>
-            <div>
-              <strong>${squadra2Giocatore1?.nome || "Giocatore 2"}</strong>
-              ${squadra2Giocatore2 ? " & " + squadra2Giocatore2.nome : ""}
-              ${vincitore2 ? '<span class="vincitore">Vincitore</span>' : ""}
-            </div>
-          </div>
-          <div style="margin-top:5px;font-size:12px;">
-            Tipo: ${p.tipo} - Luogo: ${luoghi.find(l => l.id === p.luogo)?.nome || "-"} <br>
-            Data: ${p.dataPartita || "-"}
-          </div>
-          <div style="margin-top:5px;">
-            <button onclick="modificaPartita(${i})">Modifica</button>
-            <button onclick="eliminaPartita(${i})" class="delete">Elimina</button>
-          </div>
+          <strong>${p.tipo} (${p.modalita})</strong><br>
+          <em>${p.data}</em> - ${luoghi.find(l => l.id === p.luogo)?.nome || "-"}<br>
+          ${giocatoriTxt}<br>
+          <small>Risultato: ${p.vittorie[0]} - ${p.vittorie[1]}</small><br>
+          <button onclick="eliminaPartita(${partite.length - 1 - i})" class="delete">Elimina</button>
         `;
         div.appendChild(card);
-      }
+      });
     }
 
-    function modificaPartita(i) {
-      const v0 = parseInt(document.getElementById(`score0_${i}`).value) || 0;
-      const v1 = parseInt(document.getElementById(`score1_${i}`).value) || 0;
-      partite[i].vittorie = [v0, v1];
-      localStorage.setItem("partite", JSON.stringify(partite));
-      aggiornaListaPartite();
-    }
-
-    function eliminaPartita(i) {
-      if (confirm("Eliminare questa partita?")) {
-        partite.splice(i, 1);
-        localStorage.setItem("partite", JSON.stringify(partite));
+    function eliminaPartita(idx) {
+      if (confirm("Vuoi eliminare questa partita?")) {
+        partite.splice(idx, 1);
+        salvaLocalStorage();
         aggiornaListaPartite();
       }
     }
 
-    document.addEventListener("DOMContentLoaded", aggiornaListaPartite);
+    document.getElementById("modalitaGioco").addEventListener("change", aggiornaGiocatoriDropdown);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      aggiornaLuoghiDropdown();
+      aggiornaGiocatoriDropdown();
+      aggiornaListaPartite();
+    });
   </script>
 </body>
 </html>
