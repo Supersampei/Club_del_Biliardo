@@ -1,164 +1,56 @@
-// Funzione per caricare i dati dal file JSON
-async function caricaDatiDaJSON() {
+// Variabili globali
+let giocatori = [];
+let luoghi = [];
+let partite = [];
+
+// Carica i dati da JSON e da localStorage (ibrido)
+async function caricaDati() {
   try {
-    const response = await fetch("data/data.json");
-    const dati = await response.json();
-
-    // Salviamo in variabili globali
-    window.giocatori = dati.giocatori || [];
-    window.luoghi = dati.luoghi || [];
-    window.partite = dati.partite || [];
-
-    console.log("Dati caricati da data.json:", dati);
+    // Se localStorage ha già dati, usali
+    if (localStorage.getItem("giocatori")) {
+      giocatori = JSON.parse(localStorage.getItem("giocatori"));
+      luoghi = JSON.parse(localStorage.getItem("luoghi"));
+      partite = JSON.parse(localStorage.getItem("partite"));
+      console.log("Dati caricati da localStorage");
+    } else {
+      // Altrimenti carica da data.json
+      const response = await fetch("data/data.json");
+      const dati = await response.json();
+      giocatori = dati.giocatori || [];
+      luoghi = dati.luoghi || [];
+      partite = dati.partite || [];
+      console.log("Dati caricati da data.json");
+      salvaLocalStorage();
+    }
   } catch (error) {
-    console.error("Errore nel caricamento del file data.json:", error);
-    window.giocatori = [];
-    window.luoghi = [];
-    window.partite = [];
+    console.error("Errore nel caricamento dei dati:", error);
   }
 }
 
-// Funzione che aggiorna la lista giocatori
-function aggiornaListaGiocatori() {
-  const div = document.getElementById("listaGiocatori");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  if (giocatori.length === 0) {
-    div.innerHTML = "<p>Nessun giocatore registrato</p>";
-    return;
-  }
-
-  giocatori.forEach((g) => {
-    const card = document.createElement("div");
-    card.className = "player-card";
-    card.innerHTML = `
-      <img src="${g.foto || "img/default.jpg"}" alt="Foto ${g.nome}" style="width:60px;height:60px;border-radius:50%;margin-right:10px;">
-      <div>
-        <strong>${g.nome}</strong> (${g.nickname})<br>
-        <small>${g.specialita || "-"}</small>
-      </div>
-    `;
-    div.appendChild(card);
-  });
+// Salva i dati su localStorage
+function salvaLocalStorage() {
+  localStorage.setItem("giocatori", JSON.stringify(giocatori));
+  localStorage.setItem("luoghi", JSON.stringify(luoghi));
+  localStorage.setItem("partite", JSON.stringify(partite));
 }
 
-// Funzione che aggiorna la lista luoghi
-function aggiornaListaLuoghi() {
-  const div = document.getElementById("listaLuoghi");
-  if (!div) return;
+// Funzione per esportare i dati in JSON
+function esportaDatiJSON() {
+  const dati = { giocatori, luoghi, partite };
 
-  div.innerHTML = "";
+  const blob = new Blob([JSON.stringify(dati, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
 
-  if (luoghi.length === 0) {
-    div.innerHTML = "<p>Nessun luogo registrato</p>";
-    return;
-  }
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "data.json";
+  a.click();
 
-  luoghi.forEach((l) => {
-    const card = document.createElement("div");
-    card.className = "luogo-card";
-    card.innerHTML = `
-      <strong>${l.nome}</strong><br>
-      <small>${l.indirizzo}</small><br>
-      ${l.maps ? `<a href="${l.maps}" target="_blank">Apri su Google Maps</a>` : ""}
-      <p>${l.note || ""}</p>
-    `;
-    div.appendChild(card);
-  });
+  URL.revokeObjectURL(url);
 }
 
-// Funzione che aggiorna la lista partite
-function aggiornaListaPartite() {
-  const div = document.getElementById("listaPartite");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  if (partite.length === 0) {
-    div.innerHTML = "<p>Nessuna partita registrata</p>";
-    return;
-  }
-
-  partite
-    .slice()
-    .reverse() // ultima in alto
-    .forEach((p) => {
-      const g1 = giocatori[p.giocatori[0]]?.nome || "Giocatore 1";
-      const g2 = giocatori[p.giocatori[1]]?.nome || "Giocatore 2";
-      const luogo = luoghi[p.luogo]?.nome || "-";
-
-      const card = document.createElement("div");
-      card.className = "partita-card";
-      card.innerHTML = `
-        <div><strong>${p.tipo}</strong> (${p.modalita})</div>
-        <div>${g1} vs ${g2}</div>
-        <div>Risultato: ${p.vittorie[0]} - ${p.vittorie[1]}</div>
-        <div>Data: ${p.dataPartita || "-"}</div>
-        <div>Luogo: ${luogo}</div>
-      `;
-      div.appendChild(card);
-    });
-}
-
-// Funzione che aggiorna la scheda statistiche
-function aggiornaStatistiche() {
-  const div = document.getElementById("statisticheGiocatori");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  if (giocatori.length === 0) {
-    div.innerHTML = "<p>Nessun giocatore registrato</p>";
-    return;
-  }
-
-  const stats = giocatori.map((g, idx) => {
-    let vittorie = 0, sconfitte = 0;
-    partite.forEach((p) => {
-      if (p.giocatori.includes(idx)) {
-        const pos = p.giocatori.indexOf(idx);
-        const miei = p.vittorie[pos];
-        const avv = p.vittorie[1 - pos];
-        if (miei > avv) vittorie++;
-        else sconfitte++;
-      }
-    });
-    const partiteGiocate = vittorie + sconfitte;
-    const winrate = partiteGiocate ? ((vittorie / partiteGiocate) * 100).toFixed(1) : "0.0";
-    return { nome: g.nome, nickname: g.nickname, vittorie, sconfitte, partiteGiocate, winrate };
-  });
-
-  let html = `
-    <table class="stats-table">
-      <thead>
-        <tr><th>Giocatore</th><th>Partite</th><th>Vittorie</th><th>Sconfitte</th><th>% Vittorie</th></tr>
-      </thead><tbody>
-  `;
-
-  stats.forEach((s) => {
-    html += `<tr>
-      <td>${s.nome} (${s.nickname})</td>
-      <td>${s.partiteGiocate}</td>
-      <td>${s.vittorie}</td>
-      <td>${s.sconfitte}</td>
-      <td>${s.winrate}%</td>
-    </tr>`;
-  });
-
-  html += "</tbody></table>";
-  div.innerHTML = html;
-}
-
-// Quando la pagina è pronta → carica JSON e aggiorna tutto
+// Quando la pagina è pronta
 document.addEventListener("DOMContentLoaded", async () => {
-  await caricaDatiDaJSON();
-  aggiornaListaGiocatori();
-  aggiornaListaLuoghi();
-  aggiornaListaPartite();
-  aggiornaStatistiche();
+  await caricaDati();
+  // qui puoi richiamare aggiornaListaGiocatori(), aggiornaListaLuoghi(), ecc.
 });
-
-
-
