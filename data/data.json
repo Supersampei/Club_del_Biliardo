@@ -4,43 +4,52 @@
       "nome": "Eugenio",
       "nickname": "Supersampei",
       "email": "megasampei@gmail.com",
-           "specialita": "Strategia"
+      "foto": "img/eugenio.jpg"
+      "specialita": "Strategia"
     },
     {
       "nome": "Lorenzo",
       "nickname": "Cecchino",
       "email": "lorylory@gmail.com",
-           "specialita": "Precisione"
+      "foto": "img/lorenzo.png"
+      "specialita": "Precisione"
     },
     {
       "nome": "Mirco",
       "nickname": "Miroslav",
       "email": "mircomirco@gmail.com",
-           "specialita": "Tiro di sponda"
+      "foto": "img/mirco.png"
+      "specialita": "Tiro di sponda"
     },
     {
       "nome": "Manuel",
       "nickname": "Man223",
       "email": "manumanu@gmail.com",
-           "specialita": "Tiro di potenza"
+      "foto": "img/manuel.png"
+      "specialita": "Tiro di potenza"
+      "foto": "img/manuel.png"
     },
     {
       "nome": "Sandro",
       "nickname": "The Boss",
       "email": "sandrolotter@gmail.com",
-           "specialita": "Opportunista"
+      "foto": "img/sandro.png"
+      "specialita": "Opportunista"
+      "foto": "img/sandro.png"
     },
     {
       "nome": "Francesco",
       "nickname": "Ghost",
       "email": "francyfrancy@gmail.com",
-           "specialita": "Calma"
+      "foto": "img/francesco.png"
+      "specialita": "Calma"
     },
     {
       "nome": "Artem",
       "nickname": "Lucky Man",
       "email": "artearte@gmail.com",
-    "specialita": "Tiro ad effetto"
+      "foto": "img/artem.png"
+      "specialita": "Tiro ad effetto"
     }
   ],
   "partite": [
@@ -122,3 +131,6 @@
     }
   ]
 }
+  ]
+}
+
