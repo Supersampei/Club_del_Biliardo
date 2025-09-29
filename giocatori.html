@@ -20,47 +20,24 @@
 
   <main>
     <h2>Gestione Giocatori</h2>
-    <div id="listaGiocatori" class="lista-card"></div>
-  </main>
 
-  <!-- Modal Dettagli Giocatore -->
-  <div class="modal" id="modalGiocatore">
-    <div class="modal-content">
-      <span class="close-modal" onclick="chiudiModal()">&times;</span>
-      <div id="dettagliGiocatore"></div>
-    </div>
-  </div>
+    <form id="formGiocatore">
+      <input type="hidden" id="giocatoreIndex">
+      <input type="text" id="nomeGiocatore" placeholder="Nome" required>
+      <input type="text" id="nicknameGiocatore" placeholder="Nickname" required>
+      <input type="email" id="emailGiocatore" placeholder="Email">
+      <input type="text" id="specialitaGiocatore" placeholder="Specialità">
+      <button type="submit">Salva Giocatore</button>
+    </form>
+
+    <h3>Lista Giocatori</h3>
+    <div id="listaGiocatori"></div>
+  </main>
 
   <script src="js/main.js"></script>
   <script>
-    // Funzione per aprire il modal dettagli giocatore
-    function apriModalGiocatore(idx) {
-      const g = giocatori[idx];
-      const div = document.getElementById("dettagliGiocatore");
-
-      div.innerHTML = `
-        <div style="text-align:center;">
-          <img src="${g.foto || 'img/default.jpg'}" 
-               alt="Foto ${g.nome}" 
-               style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:10px;">
-          <h3>${g.nome} <small>(${g.nickname})</small></h3>
-          <p><strong>Email:</strong> ${g.email || "-"}</p>
-          <p><strong>Specialità:</strong> ${g.specialita || "-"}</p>
-        </div>
-      `;
-
-      document.getElementById("modalGiocatore").style.display = "flex";
-    }
-
-    function chiudiModal() {
-      document.getElementById("modalGiocatore").style.display = "none";
-    }
-
-    // Override della funzione lista per aggiungere onclick
     function aggiornaListaGiocatori() {
       const div = document.getElementById("listaGiocatori");
-      if (!div) return;
-
       div.innerHTML = "";
 
       if (giocatori.length === 0) {
@@ -68,25 +45,58 @@
         return;
       }
 
-      giocatori.forEach((g, idx) => {
+      giocatori.forEach((g, i) => {
         const card = document.createElement("div");
-        card.className = "player-card";
-        card.onclick = () => apriModalGiocatore(idx);
-
+        card.className = "card";
         card.innerHTML = `
-          <img src="${g.foto || "img/default.jpg"}" 
-               alt="Foto ${g.nome}" 
-               style="width:80px;height:80px;border-radius:50%;margin-right:10px;">
-          <div>
-            <strong>${g.nome}</strong> (${g.nickname})<br>
-            <small>${g.specialita || "-"}</small>
-          </div>
+          <strong>${g.nome}</strong> (${g.nickname})<br>
+          <small>${g.email || "-"}</small><br>
+          <em>${g.specialita || "-"}</em><br>
+          <button onclick="modificaGiocatore(${i})">Modifica</button>
+          <button onclick="eliminaGiocatore(${i})" class="delete">Elimina</button>
         `;
         div.appendChild(card);
       });
     }
+
+    document.getElementById("formGiocatore").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const idx = document.getElementById("giocatoreIndex").value;
+      const nome = document.getElementById("nomeGiocatore").value.trim();
+      const nickname = document.getElementById("nicknameGiocatore").value.trim();
+      const email = document.getElementById("emailGiocatore").value.trim();
+      const specialita = document.getElementById("specialitaGiocatore").value.trim();
+
+      if (idx) {
+        giocatori[idx] = { nome, nickname, email, specialita };
+      } else {
+        giocatori.push({ nome, nickname, email, specialita });
+      }
+
+      salvaLocalStorage();
+      aggiornaListaGiocatori();
+      e.target.reset();
+      document.getElementById("giocatoreIndex").value = "";
+    });
+
+    function modificaGiocatore(i) {
+      const g = giocatori[i];
+      document.getElementById("giocatoreIndex").value = i;
+      document.getElementById("nomeGiocatore").value = g.nome;
+      document.getElementById("nicknameGiocatore").value = g.nickname;
+      document.getElementById("emailGiocatore").value = g.email;
+      document.getElementById("specialitaGiocatore").value = g.specialita;
+    }
+
+    function eliminaGiocatore(i) {
+      if (confirm("Vuoi eliminare questo giocatore?")) {
+        giocatori.splice(i, 1);
+        salvaLocalStorage();
+        aggiornaListaGiocatori();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", aggiornaListaGiocatori);
   </script>
 </body>
 </html>
-
-
