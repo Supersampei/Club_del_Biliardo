@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Giocatori - Club del Biliardo</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .giocatore-card img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .giocatore-card {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -22,12 +36,27 @@
     <h2>Gestione Giocatori</h2>
 
     <form id="formGiocatore">
+      <input type="hidden" id="giocatoreIndex">
       <input type="text" id="nome" placeholder="Nome" required>
       <input type="text" id="nickname" placeholder="Nickname" required>
       <input type="email" id="email" placeholder="Email">
       <input type="text" id="specialita" placeholder="Specialità">
-      <input type="file" id="foto" accept="image/*">
-      <button type="submit">Aggiungi Giocatore</button>
+
+      <!-- Menu a tendina per scegliere foto -->
+      <label for="foto">Seleziona Foto:</label>
+      <select id="foto">
+        <option value="">-- Nessuna foto --</option>
+        <option value="eugenio.png">eugenio.png</option>
+        <option value="lorenzo.png">lorenzo.png</option>
+        <option value="mirco.png">mirco.png</option>
+        <option value="manuel.png">manuel.png</option>
+        <option value="sandro.png">sandro.png</option>
+        <option value="francesco.png">francesco.png</option>
+        <option value="artem.png">artem.png</option>
+        <!-- aggiungi qui altri file che hai in /img -->
+      </select>
+
+      <button type="submit">Salva Giocatore</button>
     </form>
 
     <h3>Lista Giocatori</h3>
@@ -55,72 +84,39 @@
 
       giocatori.forEach((g, i) => {
         const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
+        card.className = "giocatore-card";
+
+        const img = document.createElement("img");
+        img.src = g.foto ? `img/${g.foto}` : "img/default.png";
+        img.alt = g.nome;
+
+        const info = document.createElement("div");
+        info.innerHTML = `
           <strong>${g.nome}</strong> (${g.nickname})<br>
           <small>${g.specialita || "-"}</small><br>
           <button onclick="apriSchedaGiocatore(${i})">👀 Dettagli</button>
           <button onclick="eliminaGiocatore(${i})" class="delete">❌ Elimina</button>
         `;
+
+        card.appendChild(img);
+        card.appendChild(info);
         div.appendChild(card);
       });
     }
 
     function apriSchedaGiocatore(idx) {
       const g = giocatori[idx];
-
-      // Statistiche base
-      let vittorie = 0, sconfitte = 0, pareggi = 0, miniVinte = 0, miniPerse = 0;
-      const partiteGiocatore = [];
-
-      partite.forEach((p, i) => {
-        if (p.giocatori.includes(idx)) {
-          const pos = p.giocatori.indexOf(idx);
-          const isTeam1 = (p.modalita === "singolo") ? (pos === 0) : (pos === 0 || pos === 1);
-          const score = isTeam1 ? p.vittorie[0] : p.vittorie[1];
-          const oppScore = isTeam1 ? p.vittorie[1] : p.vittorie[0];
-
-          if (score > oppScore) vittorie++;
-          else if (score < oppScore) sconfitte++;
-          else pareggi++;
-
-          if (p.dettagli) {
-            p.dettagli.forEach((res) => {
-              const isMyWin = (isTeam1 && res === "V") || (!isTeam1 && res === "P");
-              if (isMyWin) miniVinte++;
-              else miniPerse++;
-            });
-          }
-
-          partiteGiocatore.push({
-            data: p.data,
-            avversari: p.giocatori.filter((_, j) => j !== pos).map(j => giocatori[p.giocatori[j]]?.nome || "?"),
-            risultato: `${score}-${oppScore}`
-          });
-        }
-      });
-
-      // Ultime 5 partite
-      const ultime = partiteGiocatore.slice(-5).reverse();
-
       const modal = document.getElementById("modalGiocatore");
       const content = document.getElementById("contenutoGiocatore");
+
       content.innerHTML = `
         <h3>${g.nome} (${g.nickname})</h3>
+        <img src="${g.foto ? `img/${g.foto}` : "img/default.png"}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;"><br>
         <p><strong>Email:</strong> ${g.email || "-"}</p>
         <p><strong>Specialità:</strong> ${g.specialita || "-"}</p>
-        <p><strong>Statistiche:</strong><br>
-          Vittorie: <span style="color:green">${vittorie}</span> |
-          Pareggi: <span style="color:orange">${pareggi}</span> |
-          Sconfitte: <span style="color:red">${sconfitte}</span><br>
-          Mini vinte: ${miniVinte} | Mini perse: ${miniPerse}
-        </p>
-        <h4>Ultime 5 partite</h4>
-        <ul>
-          ${ultime.length > 0 ? ultime.map(p => `<li>${p.data}: ${p.risultato} vs ${p.avversari.join(", ")}</li>`).join("") : "<li>Nessuna partita</li>"}
-        </ul>
         <button onclick="modificaGiocatore(${idx})">✏️ Modifica</button>
       `;
+
       modal.style.display = "block";
     }
 
@@ -128,28 +124,45 @@
       document.getElementById("modalGiocatore").style.display = "none";
     }
 
-    function modificaGiocatore(idx) {
-      const g = giocatori[idx];
+    function modificaGiocatore(i) {
+      const g = giocatori[i];
+      document.getElementById("giocatoreIndex").value = i;
       document.getElementById("nome").value = g.nome;
       document.getElementById("nickname").value = g.nickname;
       document.getElementById("email").value = g.email;
       document.getElementById("specialita").value = g.specialita;
-      eliminaGiocatore(idx);
+      document.getElementById("foto").value = g.foto || "";
       chiudiModal();
     }
 
     document.getElementById("formGiocatore").addEventListener("submit", (e) => {
       e.preventDefault();
+      const idx = document.getElementById("giocatoreIndex").value;
       const nome = document.getElementById("nome").value.trim();
       const nickname = document.getElementById("nickname").value.trim();
       const email = document.getElementById("email").value.trim();
       const specialita = document.getElementById("specialita").value.trim();
+      const foto = document.getElementById("foto").value.trim();
 
-      giocatori.push({ nome, nickname, email, specialita });
+      if (idx) {
+        giocatori[idx] = { nome, nickname, email, specialita, foto };
+      } else {
+        giocatori.push({ nome, nickname, email, specialita, foto });
+      }
+
       salvaLocalStorage();
       aggiornaListaGiocatori();
       e.target.reset();
+      document.getElementById("giocatoreIndex").value = "";
     });
+
+    function eliminaGiocatore(i) {
+      if (confirm("Vuoi eliminare questo giocatore?")) {
+        giocatori.splice(i, 1);
+        salvaLocalStorage();
+        aggiornaListaGiocatori();
+      }
+    }
 
     document.addEventListener("DOMContentLoaded", aggiornaListaGiocatori);
   </script>
