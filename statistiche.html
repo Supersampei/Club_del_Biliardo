@@ -3,127 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biliardando's Club - Statistiche</title>
+  <title>Statistiche - Club del Biliardo</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Statistiche Giocatori</h1>
+    <h1>Club del Biliardo</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="giocatori.html">Giocatori</a>
       <a href="luoghi.html">Luoghi</a>
       <a href="partite.html">Partite</a>
-      <a href="statistiche.html" aria-current="true">Statistiche</a>
+      <a href="statistiche.html" aria-current="page">Statistiche</a>
     </nav>
   </header>
 
   <main>
-    <section>
-      <h2>Classifica Generale</h2>
-      <div id="statisticheGiocatori"></div>
-    </section>
+    <h2>Classifica Giocatori</h2>
+    <div id="tabellaStatistiche"></div>
   </main>
 
   <script src="js/main.js"></script>
   <script>
-    let giocatori = JSON.parse(localStorage.getItem("giocatori") || "[]");
-    let partite = JSON.parse(localStorage.getItem("partite") || "[]");
-
-    function aggiornaStatistiche() {
-      const div = document.getElementById("statisticheGiocatori");
-      div.innerHTML = "";
-
+    function calcolaStatistiche() {
       if (giocatori.length === 0) {
-        div.innerHTML = "<p>Nessun giocatore registrato</p>";
+        document.getElementById("tabellaStatistiche").innerHTML = "<p>Nessun giocatore registrato</p>";
         return;
       }
 
-      const stats = giocatori.map((g, i) => {
-        let vittorieFinali = 0, sconfitteFinali = 0;
-        let miniVinte = 0, miniTot = 0;
+      const stats = giocatori.map((g, idx) => {
+        let partiteGiocate = 0, vittorie = 0, sconfitte = 0, pareggi = 0;
+        let miniVinte = 0, miniPerse = 0;
 
         partite.forEach(p => {
-          if (p.giocatori.includes(i)) {
-            const idTeam = p.giocatori.indexOf(i) % 2;
+          if (p.giocatori.includes(idx)) {
+            partiteGiocate++;
+            const pos = p.giocatori.indexOf(idx);
+            const isTeam1 = (p.modalita === "singolo") ? (pos === 0) : (pos === 0 || pos === 1);
+            const score = isTeam1 ? p.vittorie[0] : p.vittorie[1];
+            const oppScore = isTeam1 ? p.vittorie[1] : p.vittorie[0];
 
-            // Risultato finale del match
-            if (p.vittorie[idTeam] > p.vittorie[1 - idTeam]) {
-              vittorieFinali++;
-            } else if (p.vittorie[idTeam] < p.vittorie[1 - idTeam]) {
-              sconfitteFinali++;
-            }
+            // Vittoria / Sconfitta / Pareggio
+            if (score > oppScore) vittorie++;
+            else if (score < oppScore) sconfitte++;
+            else pareggi++;
 
-            // Mini-partite vinte (se registrate nel log dettagliato)
-            if (p.dettagli && Array.isArray(p.dettagli)) {
-              miniVinte += p.dettagli.filter(r => r === "V").length;
-              miniTot += p.dettagli.length;
+            // Mini partite vinte / perse
+            if (p.dettagli) {
+              p.dettagli.forEach((res, i) => {
+                const isMyWin = (isTeam1 && res === "V") || (!isTeam1 && res === "P");
+                if (isMyWin) miniVinte++;
+                else miniPerse++;
+              });
             }
           }
         });
 
-        const totMatch = vittorieFinali + sconfitteFinali;
-        const winrate = totMatch > 0 ? (vittorieFinali / totMatch * 100) : 0;
+        const winrate = partiteGiocate > 0 ? (vittorie / partiteGiocate) * 100 : 0;
 
-        // Indice abilità: 70% winrate + 30% mini-partite vinte
-        const indice = miniTot > 0
-          ? (winrate * 0.7) + ((miniVinte / miniTot) * 100 * 0.3)
-          : winrate;
+        // Indice di abilità (max 100)
+        const totaleMini = miniVinte + miniPerse;
+        const miniScore = totaleMini > 0 ? (miniVinte / totaleMini) * 100 : 0;
+        const indiceAbilita = (winrate * 0.7 + miniScore * 0.3) * (Math.log(1 + partiteGiocate) / Math.log(1 + 30));
 
         return {
           nome: g.nome,
           nickname: g.nickname,
-          foto: g.foto,
-          vittorie: vittorieFinali,
-          sconfitte: sconfitteFinali,
-          winrate: winrate.toFixed(2),
-          indice: indice.toFixed(2)
+          partiteGiocate,
+          vittorie,
+          sconfitte,
+          pareggi,
+          winrate,
+          miniVinte,
+          miniPerse,
+          indiceAbilita: indiceAbilita > 100 ? 100 : indiceAbilita
         };
       });
 
-      // Ordina per indice abilità
-      stats.sort((a, b) => b.indice - a.indice);
+      stats.sort((a, b) => b.indiceAbilita - a.indiceAbilita);
 
-      let html = `
+      const table = `
         <table class="stats-table">
           <thead>
             <tr>
               <th>#</th>
-              <th>Avatar</th>
-              <th>Nome (Nickname)</th>
-              <th>Vittorie</th>
-              <th>Sconfitte</th>
+              <th>Giocatore</th>
+              <th>Partite</th>
+              <th>V</th>
+              <th>P</th>
+              <th>S</th>
               <th>% Vittorie</th>
-              <th>Indice Abilità</th>
+              <th>Mini vinte</th>
+              <th>Mini perse</th>
+              <th>Indice abilità</th>
             </tr>
           </thead>
           <tbody>
+            ${stats.map((s, i) => `
+              <tr>
+                <td>${i+1}</td>
+                <td>${s.nome} (${s.nickname})</td>
+                <td>${s.partiteGiocate}</td>
+                <td style="color:green">${s.vittorie}</td>
+                <td style="color:orange">${s.pareggi}</td>
+                <td style="color:red">${s.sconfitte}</td>
+                <td>${s.winrate.toFixed(1)}%</td>
+                <td>${s.miniVinte}</td>
+                <td>${s.miniPerse}</td>
+                <td><strong>${s.indiceAbilita.toFixed(1)}%</strong></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
       `;
-
-      stats.forEach((s, idx) => {
-        html += `
-          <tr>
-            <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
-            <td style="text-align:center;">
-              ${s.foto 
-                ? `<img src="${s.foto}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`
-                : `<div style="width:40px;height:40px;border-radius:50%;background:#b3c9e6;display:flex;align-items:center;justify-content:center;color:#1967b3;font-weight:bold;">${s.nome.charAt(0)}</div>`
-              }
-            </td>
-            <td>${s.nome} (${s.nickname})</td>
-            <td style="color:#28a745;font-weight:bold;">${s.vittorie}</td>
-            <td style="color:#dc3545;font-weight:bold;">${s.sconfitte}</td>
-            <td style="font-weight:bold;">${s.winrate}%</td>
-            <td style="font-weight:bold;background:#e0f0ff;color:#245ab4;">${s.indice}</td>
-          </tr>
-        `;
-      });
-
-      html += "</tbody></table>";
-      div.innerHTML = html;
+      document.getElementById("tabellaStatistiche").innerHTML = table;
     }
 
-    document.addEventListener("DOMContentLoaded", aggiornaStatistiche);
+    document.addEventListener("DOMContentLoaded", calcolaStatistiche);
   </script>
 </body>
 </html>
