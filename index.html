@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biliardando's Club - Home</title>
+  <title>Home - Club del Biliardo</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Biliardando's Club</h1>
+    <h1>Club del Biliardo</h1>
     <nav>
-      <a href="index.html" aria-current="true">Home</a>
+      <a href="index.html" aria-current="page">Home</a>
       <a href="giocatori.html">Giocatori</a>
       <a href="luoghi.html">Luoghi</a>
       <a href="partite.html">Partite</a>
@@ -19,15 +19,17 @@
   </header>
 
   <main>
-    <section>
-      <h2>Benvenuto!</h2>
-      <p>Gestisci giocatori, partite, luoghi e statistiche del tuo gruppo di biliardo.</p>
-      <div style="margin-top:20px;">
-        <button onclick="esportaDati()">Esporta Dati</button>
-        <input type="file" id="importaDati" accept=".json" style="display:none" onchange="importaDati(event)">
-        <button onclick="document.getElementById('importaDati').click()">Importa Dati</button>
-      </div>
-    </section>
+    <h2>Benvenuto!</h2>
+    <p>Gestisci giocatori, partite, luoghi e statistiche del tuo gruppo di biliardo.</p>
+
+    <div class="actions">
+      <button onclick="esportaDatiJSON()">📥 Esporta JSON aggiornato</button>
+    </div>
+
+    <p style="margin-top:1rem;font-size:0.9em;color:#ddd;">
+      I dati vengono caricati automaticamente da <code>data/data.json</code>.
+      Dopo averli modificati qui, ricordati di esportare il nuovo file e ricaricarlo su GitHub.
+    </p>
   </main>
 
   <script src="js/main.js"></script>
