@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biliardando's Club - Giocatori</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Gestione Giocatori</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="giocatori.html" aria-current="true">Giocatori</a>
+      <a href="luoghi.html">Luoghi</a>
+      <a href="partite.html">Partite</a>
+      <a href="statistiche.html">Statistiche</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Sezione aggiunta giocatori -->
+    <section>
+      <h2>Aggiungi Giocatore</h2>
+      <input type="text" id="nomeGiocatore" placeholder="Nome" maxlength="50" required>
+      <input type="text" id="nicknameGiocatore" placeholder="Nickname" maxlength="30" required>
+      <input type="email" id="emailGiocatore" placeholder="Email">
+      <label>Foto avatar:</label>
+      <input type="file" id="fotoGiocatore" accept="image/*">
+      <button onclick="aggiungiGiocatore()">Aggiungi Giocatore</button>
+    </section>
+
+    <!-- Lista giocatori -->
+    <section>
+      <h2>Lista Giocatori</h2>
+      <div id="listaGiocatori"></div>
+    </section>
+  </main>
+
+  <!-- Modal giocatore -->
+  <div class="modal" id="modalGiocatore">
+    <div class="modal-content">
+      <span class="close-modal" onclick="chiudiModal()">&times;</span>
+      <div id="dettagliGiocatore"></div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    let giocatori = JSON.parse(localStorage.getItem("giocatori") || "[]");
+    let partite = JSON.parse(localStorage.getItem("partite") || "[]");
+
+    function aggiornaListaGiocatori() {
+      const div = document.getElementById("listaGiocatori");
+      div.innerHTML = "";
+
+      if (giocatori.length === 0) {
+        div.innerHTML = "<p>Nessun giocatore registrato</p>";
+        return;
+      }
+
+      giocatori.forEach((g, i) => {
+        const card = document.createElement("div");
+        card.className = "player-card";
+        card.onclick = () => apriModalGiocatore(i);
+
+        card.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${g.foto 
+              ? `<img src="${g.foto}" alt="avatar" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">`
+              : `<div style="width:50px;height:50px;border-radius:50%;background:#5a5aa0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">${g.nome.charAt(0)}</div>`}
+            <div>
+              <strong>${g.nome}</strong> (${g.nickname})<br>
+              <small>${g.email || "-"}</small>
+            </div>
+          </div>
+        `;
+
+        div.appendChild(card);
+      });
+    }
+
+    function apriModalGiocatore(idx) {
+      const g = giocatori[idx];
+      const div = document.getElementById("dettagliGiocatore");
+
+      let vittorieFinali = 0, sconfitteFinali = 0;
+      let miniVinte = 0, miniTot = 0;
+      let partiteGiocate = [];
+
+      partite.forEach(p => {
+        if (p.giocatori.includes(idx)) {
+          const idTeam = p.giocatori.indexOf(idx) % 2;
+
+          if (p.vittorie[idTeam] > p.vittorie[1 - idTeam]) vittorieFinali++;
+          else if (p.vittorie[idTeam] < p.vittorie[1 - idTeam]) sconfitteFinali++;
+
+          if (p.dettagli && Array.isArray(p.dettagli)) {
+            miniVinte += p.dettagli.filter(r => r === "V").length;
+            miniTot += p.dettagli.length;
+          }
+
+          const avversari = p.giocatori.filter(id => id !== idx)
+            .map(id => giocatori[id]?.nome || "Sconosciuto");
+          partiteGiocate.push({
+            data: p.dataPartita || "N/D",
+            risultato: `${p.vittorie[idTeam]} - ${p.vittorie[1 - idTeam]}`,
+            avversari: avversari.join(" & ")
+          });
+        }
+      });
+
+      const totMatch = vittorieFinali + sconfitteFinali;
+      const winrate = totMatch > 0 ? (vittorieFinali / totMatch * 100) : 0;
+      const indice = miniTot > 0
+        ? (winrate * 0.7) + ((miniVinte / miniTot) * 100 * 0.3)
+        : winrate;
+
+      const ultimePartite = partiteGiocate.slice(-5).reverse();
+
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:15px;margin-bottom:15px;">
+          ${g.foto
+            ? `<img src="${g.foto}" alt="avatar" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #5a5aa0;">`
+            : `<div style="width:100px;height:100px;border-radius:50%;background:#5a5aa0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;font-weight:bold;border:3px solid #5a5aa0;">${g.nome.charAt(0)}</div>`}
+          <div>
+            <h3>${g.nome} <span style="color:#666;font-weight:normal;">(${g.nickname})</span></h3>
+            <p><strong>Email:</strong> ${g.email || "-"}</p>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-around;background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:15px;color:#333;">
+          <div><div style="font-size:20px;font-weight:bold;color:#4a3c8c;">${totMatch}</div><div>Partite</div></div>
+          <div><div style="font-size:20px;font-weight:bold;color:#28a745;">${vittorieFinali}</div><div>Vittorie</div></div>
+          <div><div style="font-size:20px;font-weight:bold;color:#dc3545;">${sconfitteFinali}</div><div>Sconfitte</div></div>
+          <div><div style="font-size:20px;font-weight:bold;color:#ffc107;">${winrate.toFixed(2)}%</div><div>% Vittorie</div></div>
+          <div><div style="font-size:20px;font-weight:bold;color:#6f42c1;">${indice.toFixed(2)}</div><div>Indice</div></div>
+        </div>
+
+        <h4>Ultime 5 partite</h4>
+        <ul>
+          ${ultimePartite.length > 0
+            ? ultimePartite.map(p => `<li>${p.data} vs ${p.avversari} → ${p.risultato}</li>`).join("")
+            : "<li>Nessuna partita giocata</li>"}
+        </ul>
+
+        <div style="display:flex;gap:10px;margin-top:15px;">
+          <button onclick="apriModificaGiocatore(${idx})">Modifica</button>
+          <button class="delete" onclick="eliminaGiocatore(${idx})">Elimina</button>
+        </div>
+      `;
+
+      document.getElementById("modalGiocatore").style.display = "flex";
+    }
+
+    function apriModificaGiocatore(idx) {
+      const g = giocatori[idx];
+      const div = document.getElementById("dettagliGiocatore");
+
+      div.innerHTML = `
+        <h3>Modifica Giocatore</h3>
+        <label>Nome:</label>
+        <input type="text" id="editNome" value="${g.nome}">
+        <label>Nickname:</label>
+        <input type="text" id="editNickname" value="${g.nickname}">
+        <label>Email:</label>
+        <input type="email" id="editEmail" value="${g.email || ""}">
+        <label>Nuova foto avatar:</label>
+        <input type="file" id="editFoto" accept="image/*">
+        <div style="display:flex;gap:10px;margin-top:15px;">
+          <button onclick="salvaModificaGiocatore(${idx})">Salva</button>
+          <button class="delete" onclick="apriModalGiocatore(${idx})">Annulla</button>
+        </div>
+      `;
+    }
+
+    function salvaModificaGiocatore(idx) {
+      const nome = document.getElementById("editNome").value.trim();
+      const nickname = document.getElementById("editNickname").value.trim();
+      const email = document.getElementById("editEmail").value.trim();
+      const fotoInput = document.getElementById("editFoto");
+
+      if (!nome || !nickname) {
+        alert("Nome e nickname sono obbligatori!");
+        return;
+      }
+
+      if (fotoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          giocatori[idx] = { ...giocatori[idx], nome, nickname, email, foto: e.target.result };
+          localStorage.setItem("giocatori", JSON.stringify(giocatori));
+          aggiornaListaGiocatori();
+          apriModalGiocatore(idx);
+        };
+        reader.readAsDataURL(fotoInput.files[0]);
+      } else {
+        giocatori[idx] = { ...giocatori[idx], nome, nickname, email };
+        localStorage.setItem("giocatori", JSON.stringify(giocatori));
+        aggiornaListaGiocatori();
+        apriModalGiocatore(idx);
+      }
+    }
+
+    function eliminaGiocatore(idx) {
+      if (confirm("Vuoi eliminare questo giocatore?")) {
+        giocatori.splice(idx, 1);
+        localStorage.setItem("giocatori", JSON.stringify(giocatori));
+        aggiornaListaGiocatori();
+        chiudiModal();
+      }
+    }
+
+    function chiudiModal() {
+      document.getElementById("modalGiocatore").style.display = "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", aggiornaListaGiocatori);
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biliardando's Club - Home</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Biliardando's Club</h1>
+    <nav>
+      <a href="index.html" aria-current="true">Home</a>
+      <a href="giocatori.html">Giocatori</a>
+      <a href="luoghi.html">Luoghi</a>
+      <a href="partite.html">Partite</a>
+      <a href="statistiche.html">Statistiche</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Benvenuto!</h2>
+      <p>Gestisci giocatori, partite, luoghi e statistiche del tuo gruppo di biliardo.</p>
+      <div style="margin-top:20px;">
+        <button onclick="esportaDati()">Esporta Dati</button>
+        <input type="file" id="importaDati" accept=".json" style="display:none" onchange="importaDati(event)">
+        <button onclick="document.getElementById('importaDati').click()">Importa Dati</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

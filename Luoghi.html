@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biliardando's Club - Luoghi</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Gestione Luoghi</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="giocatori.html">Giocatori</a>
+      <a href="luoghi.html" aria-current="true">Luoghi</a>
+      <a href="partite.html">Partite</a>
+      <a href="statistiche.html">Statistiche</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Aggiungi Luogo</h2>
+      <input type="text" id="nomeLuogo" placeholder="Nome luogo" maxlength="50">
+      <input type="text" id="indirizzoLuogo" placeholder="Indirizzo" maxlength="100">
+      <input type="url" id="linkMaps" placeholder="Link Google Maps">
+      <label>Foto locale:</label>
+      <input type="file" id="fotoLuogo" accept="image/*">
+      <button onclick="aggiungiLuogo()">Aggiungi Luogo</button>
+    </section>
+
+    <section>
+      <h2>Lista Luoghi</h2>
+      <div id="listaLuoghi"></div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+  <script src="js/luoghi.js"></script>
+</body>
+</html>

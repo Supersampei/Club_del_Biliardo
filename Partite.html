@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biliardando's Club - Partite</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Gestione Partite</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="giocatori.html">Giocatori</a>
+      <a href="luoghi.html">Luoghi</a>
+      <a href="partite.html" aria-current="true">Partite</a>
+      <a href="statistiche.html">Statistiche</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Nuova Partita</h2>
+      <label>Tipo di gioco:</label>
+      <select id="tipoGioco">
+        <option value="8-15">8-15</option>
+        <option value="a-punti">A punti</option>
+      </select>
+
+      <label>Modalità:</label>
+      <select id="modalitaGioco">
+        <option value="singolo">Singolo</option>
+        <option value="coppia">Coppia</option>
+      </select>
+
+      <label>Luogo:</label>
+      <select id="luogoPartita"></select>
+
+      <label>Data:</label>
+      <input type="date" id="dataPartita">
+
+      <div id="selezioneGiocatori"></div>
+
+      <h3>Risultati Round</h3>
+      <div id="partitaLog"></div>
+      <button onclick="aggiungiRisultato()">Aggiungi Risultato (V/P)</button>
+      <button onclick="registraRisultato()">Registra Risultato</button>
+      <button onclick="terminaMatch()">Termina Match</button>
+    </section>
+
+    <section>
+      <h2>Partite Registrate</h2>
+      <div id="listaPartite"></div>
+    </section>
+  </main>
+
+  <script>
+    let giocatori = JSON.parse(localStorage.getItem("giocatori") || "[]");
+    let partite = JSON.parse(localStorage.getItem("partite") || "[]");
+    let luoghi = JSON.parse(localStorage.getItem("luoghi") || "[]");
+
+    // Aggiorna la lista delle partite in ordine inverso
+    function aggiornaListaPartite() {
+      const div = document.getElementById("listaPartite");
+      if (partite.length === 0) {
+        div.innerHTML = "<p>Nessuna partita registrata</p>";
+        return;
+      }
+      div.innerHTML = "";
+
+      // ciclo al contrario → ultime partite in alto
+      for (let i = partite.length - 1; i >= 0; i--) {
+        const p = partite[i];
+
+        const squadra1Giocatore1 = giocatori[p.giocatori[0]];
+        const squadra1Giocatore2 = p.modalita === "coppia" ? giocatori[p.giocatori[1]] : null;
+
+        const squadra2Giocatore1 = p.modalita === "singolo"
+          ? giocatori[p.giocatori[1]]
+          : giocatori[p.giocatori[2]];
+        const squadra2Giocatore2 = p.modalita === "coppia" ? giocatori[p.giocatori[3]] : null;
+
+        const vincitore1 = p.vittorie[0] > p.vittorie[1];
+        const vincitore2 = p.vittorie[1] > p.vittorie[0];
+
+        const card = document.createElement("div");
+        card.className = "partita-card";
+
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong>${squadra1Giocatore1?.nome || "Giocatore 1"}</strong>
+              ${squadra1Giocatore2 ? " & " + squadra1Giocatore2.nome : ""}
+              ${vincitore1 ? '<span class="vincitore">Vincitore</span>' : ""}
+            </div>
+            <div>
+              <input type="number" value="${p.vittorie[0]}" id="score0_${i}" style="width:40px;text-align:center;"> :
+              <input type="number" value="${p.vittorie[1]}" id="score1_${i}" style="width:40px;text-align:center;">
+            </div>
+            <div>
+              <strong>${squadra2Giocatore1?.nome || "Giocatore 2"}</strong>
+              ${squadra2Giocatore2 ? " & " + squadra2Giocatore2.nome : ""}
+              ${vincitore2 ? '<span class="vincitore">Vincitore</span>' : ""}
+            </div>
+          </div>
+          <div style="margin-top:5px;font-size:12px;">
+            Tipo: ${p.tipo} - Luogo: ${luoghi.find(l => l.id === p.luogo)?.nome || "-"} <br>
+            Data: ${p.dataPartita || "-"}
+          </div>
+          <div style="margin-top:5px;">
+            <button onclick="modificaPartita(${i})">Modifica</button>
+            <button onclick="eliminaPartita(${i})" class="delete">Elimina</button>
+          </div>
+        `;
+        div.appendChild(card);
+      }
+    }
+
+    function modificaPartita(i) {
+      const v0 = parseInt(document.getElementById(`score0_${i}`).value) || 0;
+      const v1 = parseInt(document.getElementById(`score1_${i}`).value) || 0;
+      partite[i].vittorie = [v0, v1];
+      localStorage.setItem("partite", JSON.stringify(partite));
+      aggiornaListaPartite();
+    }
+
+    function eliminaPartita(i) {
+      if (confirm("Eliminare questa partita?")) {
+        partite.splice(i, 1);
+        localStorage.setItem("partite", JSON.stringify(partite));
+        aggiornaListaPartite();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", aggiornaListaPartite);
+  </script>
+</body>
+</html>
