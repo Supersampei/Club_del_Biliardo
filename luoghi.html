@@ -5,6 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luoghi - Club del Biliardo</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .luogo-card {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .luogo-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-right: 15px;
+    }
+    .map-link {
+      color: #66f;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -23,10 +45,21 @@
 
     <form id="formLuogo">
       <input type="hidden" id="luogoIndex">
-      <input type="text" id="nomeLuogo" placeholder="Nome" required>
-      <input type="text" id="indirizzoLuogo" placeholder="Indirizzo">
-      <input type="url" id="linkMaps" placeholder="Link Google Maps">
-      <textarea id="noteLuogo" placeholder="Note"></textarea>
+      <input type="text" id="nomeLuogo" placeholder="Nome del luogo" required>
+      <input type="text" id="indirizzo" placeholder="Indirizzo">
+      <input type="url" id="link" placeholder="Link Google Maps">
+      <textarea id="note" placeholder="Note"></textarea>
+
+      <!-- Foto del luogo -->
+      <label for="fotoLuogo">Seleziona Foto:</label>
+      <select id="fotoLuogo">
+        <option value="">-- Nessuna foto --</option>
+        <option value="iguazu.png">iguazu.png</option>
+        <option value="bargrillo.png">bargrillo.png</option>
+        <option value="default-luogo.png">default-luogo.png</option>
+        <!-- aggiungi qui le foto dei locali in /img -->
+      </select>
+
       <button type="submit">Salva Luogo</button>
     </form>
 
@@ -47,46 +80,36 @@
 
       luoghi.forEach((l, i) => {
         const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
+        card.className = "luogo-card";
+
+        const img = document.createElement("img");
+        img.src = l.foto ? `img/${l.foto}` : "img/default-luogo.png";
+        img.alt = l.nome;
+
+        const info = document.createElement("div");
+        info.innerHTML = `
           <strong>${l.nome}</strong><br>
           <small>${l.indirizzo || "-"}</small><br>
-          ${l.link ? `<a href="${l.link}" target="_blank">🌍 Google Maps</a><br>` : ""}
-          <em>${l.note || "-"}</em><br>
-          <button onclick="modificaLuogo(${i})">Modifica</button>
-          <button onclick="eliminaLuogo(${i})" class="delete">Elimina</button>
+          ${l.link ? `<a href="${l.link}" target="_blank" class="map-link">🌍 Vedi su Google Maps</a><br>` : ""}
+          <em>${l.note || ""}</em><br>
+          <button onclick="modificaLuogo(${i})">✏️ Modifica</button>
+          <button onclick="eliminaLuogo(${i})" class="delete">❌ Elimina</button>
         `;
+
+        card.appendChild(img);
+        card.appendChild(info);
         div.appendChild(card);
       });
     }
-
-    document.getElementById("formLuogo").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const idx = document.getElementById("luogoIndex").value;
-      const nome = document.getElementById("nomeLuogo").value.trim();
-      const indirizzo = document.getElementById("indirizzoLuogo").value.trim();
-      const link = document.getElementById("linkMaps").value.trim();
-      const note = document.getElementById("noteLuogo").value.trim();
-
-      if (idx) {
-        luoghi[idx] = { ...luoghi[idx], nome, indirizzo, link, note };
-      } else {
-        luoghi.push({ id: Date.now().toString(), nome, indirizzo, link, note });
-      }
-
-      salvaLocalStorage();
-      aggiornaListaLuoghi();
-      e.target.reset();
-      document.getElementById("luogoIndex").value = "";
-    });
 
     function modificaLuogo(i) {
       const l = luoghi[i];
       document.getElementById("luogoIndex").value = i;
       document.getElementById("nomeLuogo").value = l.nome;
-      document.getElementById("indirizzoLuogo").value = l.indirizzo;
-      document.getElementById("linkMaps").value = l.link;
-      document.getElementById("noteLuogo").value = l.note;
+      document.getElementById("indirizzo").value = l.indirizzo;
+      document.getElementById("link").value = l.link;
+      document.getElementById("note").value = l.note;
+      document.getElementById("fotoLuogo").value = l.foto || "";
     }
 
     function eliminaLuogo(i) {
@@ -96,6 +119,27 @@
         aggiornaListaLuoghi();
       }
     }
+
+    document.getElementById("formLuogo").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const idx = document.getElementById("luogoIndex").value;
+      const nome = document.getElementById("nomeLuogo").value.trim();
+      const indirizzo = document.getElementById("indirizzo").value.trim();
+      const link = document.getElementById("link").value.trim();
+      const note = document.getElementById("note").value.trim();
+      const foto = document.getElementById("fotoLuogo").value.trim();
+
+      if (idx) {
+        luoghi[idx] = { nome, indirizzo, link, note, foto };
+      } else {
+        luoghi.push({ nome, indirizzo, link, note, foto });
+      }
+
+      salvaLocalStorage();
+      aggiornaListaLuoghi();
+      e.target.reset();
+      document.getElementById("luogoIndex").value = "";
+    });
 
     document.addEventListener("DOMContentLoaded", aggiornaListaLuoghi);
   </script>
